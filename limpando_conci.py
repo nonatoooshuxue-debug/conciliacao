@@ -19,9 +19,10 @@ revendas_contas = {
     "CRUZ":"2000-1"
 }
 transacoes = []
-arquivinhos = st.file_uploader(label="Coloque aqui os arquivos OFX, pai", accept_multiple_files=True, type=["OFX"])
-if not arquivinhos:
- st.stop()
+with st.sidebar:
+ arquivinhos = st.file_uploader(label="Coloque aqui os arquivos OFX, pai", accept_multiple_files=True, type=["OFX"])
+  if not arquivinhos:
+   st.stop()
 def conci():
     for chave, conta in revendas_contas.items():
      for extrato in arquivinhos:
@@ -146,6 +147,7 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 
 
 

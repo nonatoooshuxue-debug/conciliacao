@@ -28,15 +28,16 @@ def conci():
     transacoes = []
     for extrato in arquivinhos:
           try:
+           nome_arquivo = extrato.name.upper().replace(".OFX", "").strip()
+           conta = revendas_contas.get(nome_arquivo)
+           if conta is None:
+               st.warning(f"Arquivo {extrato.name} não tem conta no dicionário, ignorado.")
+               continue
            extrato.seek(0)
            ler_acento = extrato.read().decode('cp1252')
            sem_acento = unicodedata.normalize("NFKD", ler_acento).encode("ascii", "ignore").decode("ascii")
            ofx = OfxParser.parse(io.StringIO(sem_acento))
            for acoount in ofx.accounts:
-             conta = acoount.account_id
-             for chave, numero in revendas_contas.items():
-                 if numero.replace("-", "") in conta.replace("-", ""):
-                     conta = numero
              stmt = acoount.statement
              saldo = getattr(stmt, 'ledger_balance', None)
              if saldo is None:
@@ -53,8 +54,6 @@ def conci():
                st.warning(f"Problema no arquivo {extrato.name}: {e}")
                continue
     return transacoes
-
-transacoes = conci()
 df_ = pd.DataFrame(transacoes)
 
 if df_.empty:  # CORRIGIDO (2): se nenhum arquivo gerou transações, para aqui com aviso
@@ -162,3 +161,4 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+

@@ -11,45 +11,42 @@ import streamlit as st
 import io
 
 
-banco = r"C:\Users\lukkv\Downloads\conciliação\CONCILIAÇÃO - BANCO.xlsx"
-# data_hj = date.today()
-# data_ontem = int((data_hj - timedelta(days=3)).strftime("%d"))
-# caminho_ = rf"C:\Users\lukkv\Downloads\conciliação\conci_ofx\{data_ontem}"
-# revendas_contas = {
-#     "BOA VISTA": "2035-4",
-#     "ITAPIPOCA":"1996-8",
-#     "CRUZ":"2000-1"
-# }
-# transacoes = []
-# def conci():
-#     for chave, conta in revendas_contas.items():
-#      caminho_1 = os.path.join(caminho_, "**", f"{chave}*.OFX")
-#      caminho_2 = glob.glob(caminho_1, recursive=True)
-#      for extrato in caminho_2:
-#         with open(extrato, 'rb') as p:
-#          ler_acento = p.read().decode('cp1252')
-#          sem_acento = unicodedata.normalize("NFKD", ler_acento).encode("ascii", "ignore").decode("ascii")
-#          ofx = OfxParser.parse(io.StringIO(sem_acento))
-#          try:
-#            for acoount in ofx.accounts:
-#              stmt = acoount.statement
-#              saldo = getattr(stmt, 'ledger_balance', None)
-#              if saldo is None:
-#                   saldo = getattr(stmt, 'balance', 0.0)
-#              for t in acoount.statement.transactions:
-#                transacoes.append({
-#                    "Data": t.date,
-#                    "Beneficario/descrição": t.memo,
-#                    "Valor": t.amount,
-#                    "Conta": conta,
-#                    "Saldo": saldo
-#                })
-#          except Exception as e:
-#             print("deu tudo errado! Corre!")
+data_hj = date.today()
+data_ontem = int((data_hj - timedelta(days=3)).strftime("%d"))
+revendas_contas = {
+    "BOA VISTA": "2035-4",
+    "ITAPIPOCA":"1996-8",
+    "CRUZ":"2000-1"
+}
+transacoes = []
+arquivinhos = st.file_uploader(label="Coloque aqui os arquivos OFX, pai", accept_multiple_files=True, type=["OFX"])
+if not arquivinhos:
+ st.stop()
+def conci():
+    for chave, conta in revendas_contas.items():
+     for extrato in arquivinhos:
+          ler_acento = p.read().decode('cp1252')
+          sem_acento = unicodedata.normalize("NFKD", ler_acento).encode("ascii", "ignore").decode("ascii")
+          ofx = OfxParser.parse(io.StringIO(sem_acento))
+          try:
+           for acoount in ofx.accounts:
+             stmt = acoount.statement
+             saldo = getattr(stmt, 'ledger_balance', None)
+             if saldo is None:
+                  saldo = getattr(stmt, 'balance', 0.0)
+             for t in acoount.statement.transactions:
+               transacoes.append({
+                   "Data": t.date,
+                   "Beneficario/descrição": t.memo,
+                   "Valor": t.amount,
+                   "Conta": conta,
+                   "Saldo": saldo
+               })
+         except Exception as e:
+            print("deu tudo errado! Corre!")
     
-# conci()
-# df_ = pd.DataFrame(transacoes)
-# df_.to_excel(f"CONCILIAÇÃO - {data_ontem}.xlsx", index=False)
+conci()
+df_ = pd.DataFrame(transacoes)
 
 
 gastos = {"PIX RECEBIDO": "PIX", "LIQUIDACAO DE COBRANCA VALOR DISPONIVEL": "BOLETO", "RENTAB.INVEST FACILCRED": "Rendimentos", "PIX QR CODE DINAMICO DES: AMBEV S A": "AMBEV NOTAS", ("PGTO SALARIO VIA NET EMP", "PGTO FERIAS VIA NET EMPR", "PGTO GRATIFICACAO/PREMIO"): "FOLHA DE PAGAMENTO"}
@@ -65,7 +62,7 @@ def extrato(lancamento):
         return valor
   return "Outros"
 
-df_conci = pd.read_excel("CONCILIAÇÃO - 3.xlsx")
+df_conci = df_
 separar_revenda = {
   "REVENDA AM": "2035-4",
   "CAPITALI ITAPIPOCA": "1996-8",
@@ -127,6 +124,18 @@ except Exception as e:
 
 
 st.divider()
+st.title(f"Entradas - {data_escolhida}")
+df_filtrado_entrada = df_final[(df_final["Valor"] > 0) & (df_final["Data"] == data_escolhida)]
+st.dataframe(df_filtrado_entrada, hide_index=True, use_container_width=True)
+apenas_entradas = io.BytesIO()
+with pd.ExcelWriter(apenas_entradas, engine="openpyxl") as en:
+  abas_rev = ["CAPITALI CRUZ", "CAPITALI ITAPIPOCA", "REVENDA AM"]
+  for aba in abas_rev:
+   df_entradas = df_filtrado_entrada[df_filtrado_entrada["Revenda"] == aba]
+   df_entradas.to_excel(en, sheet_name=aba, index=False)
+st.download_button(label="baixe aqui apenas as entradas do periodo:", data=apenas_entradas.getvalue(), file_name=f"entradas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+st.divider()
 st.title(f"Saidas - {data_escolhida}")
 df_filtrado_saida = df_final[(df_final["Valor"] < 0) & (df_final["Data"] == data_escolhida)]
 st.dataframe(df_filtrado_saida, hide_index=True, use_container_width=True)
@@ -137,4 +146,5 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 

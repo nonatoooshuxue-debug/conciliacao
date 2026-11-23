@@ -54,7 +54,7 @@ def conci():
                st.warning(f"Problema no arquivo {extrato.name}: {e}")
                continue
     return transacoes
-conci()
+transacoes = conci()
 df_ = pd.DataFrame(transacoes)
 
 if df_.empty:  # CORRIGIDO (2): se nenhum arquivo gerou transações, para aqui com aviso
@@ -162,5 +162,6 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 
 

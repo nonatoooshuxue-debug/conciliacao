@@ -90,6 +90,7 @@ df_conci["Tipo de Entrada/Saida"] = df_conci["Beneficario/descrição"].apply(ex
 df_conci["Revenda"] = np.select(condicao, revenda_in, default="Outros")
 df_conci = df_conci.drop(columns=["Conta"])
 df_conci = df_conci.drop(columns=["Saldo"])
+banco = "conciliacao_banco.xlsx"
 with pd.ExcelWriter(banco, engine="openpyxl", mode="w") as w:
   abas_rev = ["CAPITALI CRUZ", "CAPITALI ITAPIPOCA", "REVENDA AM"]
   for aba in abas_rev:
@@ -154,6 +155,7 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 
 
 

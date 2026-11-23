@@ -10,6 +10,7 @@ import numpy as np
 import streamlit as st
 import io
 
+st.set_page_config(layout="wide")  # CORRIGIDO (1): movido para cima, tem que ser o 1º comando do Streamlit
 
 data_hj = date.today()
 data_ontem = int((data_hj - timedelta(days=3)).strftime("%d"))
@@ -56,6 +57,10 @@ def conci():
 transacoes = conci()
 df_ = pd.DataFrame(transacoes)
 
+if df_.empty:  # CORRIGIDO (2): se nenhum arquivo gerou transações, para aqui com aviso
+    st.warning("Nenhuma transação foi lida dos arquivos OFX.")
+    st.stop()
+
 
 gastos = {"PIX RECEBIDO": "PIX", "LIQUIDACAO DE COBRANCA VALOR DISPONIVEL": "BOLETO", "RENTAB.INVEST FACILCRED": "Rendimentos", "PIX QR CODE DINAMICO DES: AMBEV S A": "AMBEV NOTAS", ("PGTO SALARIO VIA NET EMP", "PGTO FERIAS VIA NET EMPR", "PGTO GRATIFICACAO/PREMIO"): "FOLHA DE PAGAMENTO"}
 def extrato(lancamento):
@@ -70,7 +75,7 @@ def extrato(lancamento):
         return valor
   return "Outros"
 
-df_conci = df_
+df_conci = df_.copy()  # CORRIGIDO (3): copia de verdade, o df_ original fica intacto
 separar_revenda = {
   "REVENDA AM": "2035-4",
   "CAPITALI ITAPIPOCA": "1996-8",
@@ -98,12 +103,12 @@ with pd.ExcelWriter(banco, engine="openpyxl", mode="w") as w:
     df_filtrado.to_excel(w, sheet_name=aba, index=False)
 
 
-st.set_page_config(layout="wide")
-st.title("Conciliação - Banco:")
+st.title("Conciliação - Banco:")  # CORRIGIDO (1): o set_page_config saiu daqui
 revendas__ = ["CAPITALI CRUZ", "CAPITALI ITAPIPOCA", "REVENDA AM"]
 revenda_fil = st.sidebar.selectbox("Selecione a Revenda:", revendas__)
 df_final = pd.read_excel(banco, sheet_name=revenda_fil)
 datas_conci = sorted(df_final["Data"].dropna().unique())
+data_escolhida = None  # CORRIGIDO (4): a variável passa a existir antes do try
 try:
  if datas_conci:
    data_escolhida = st.sidebar.selectbox("Selecione as datas:", datas_conci)
@@ -127,10 +132,12 @@ try:
 
    st.dataframe(df_filtrado, hide_index=True, use_container_width=True)
  else:
-   print("k!")
+   st.warning("Nenhuma data encontrada para essa revenda.")  # CORRIGIDO (5): print -> st.warning
 except Exception as e:
-  print("deu tudo errado nessa bosta!")
+  st.error(f"Erro: {e}")  # CORRIGIDO (5): agora você vê o erro real na tela
 
+if data_escolhida is None:  # CORRIGIDO (4): para o app aqui se não tem data
+    st.stop()
 
 st.divider()
 st.title(f"Entradas - {data_escolhida}")
@@ -155,19 +162,3 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

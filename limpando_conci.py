@@ -26,7 +26,7 @@ with st.sidebar:
 def conci():
     for chave, conta in revendas_contas.items():
      for extrato in arquivinhos:
-          ler_acento = p.read().decode('cp1252')
+          ler_acento = read().decode('cp1252')
           sem_acento = unicodedata.normalize("NFKD", ler_acento).encode("ascii", "ignore").decode("ascii")
           ofx = OfxParser.parse(io.StringIO(sem_acento))
           try:
@@ -42,8 +42,8 @@ def conci():
                    "Valor": t.amount,
                    "Conta": conta,
                    "Saldo": saldo
-               })
-          except Exception as e:
+              })
+           except Exception as e:
               print("deu tudo errado! Corre!")
     
 conci()
@@ -147,6 +147,7 @@ with pd.ExcelWriter(apenas_saidas, engine="openpyxl") as s:
    df_saidas = df_filtrado_saida[df_filtrado_saida["Revenda"] == aba]
    df_saidas.to_excel(s, sheet_name=aba, index=False)
 st.download_button(label="baixe aqui apenas as saidas do periodo para uma melhor visualização:", data=apenas_saidas.getvalue(), file_name=f"saidas de {revenda_fil} - {data_escolhida}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 
 
 
